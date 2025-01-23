@@ -1,0 +1,11 @@
+# Ignore the virtual environment folder
+venv_trade_1/
+
+# Ignore Python cache files and folders
+__pycache__/
+*.pyc
+*.pyo
+
+data_modeling/
+data_ingestion/
+data_processing/
