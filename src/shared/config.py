@@ -1,6 +1,7 @@
 import os
 
-base_drive = "E:/"
+# base_drive = "E:/"
+base_drive = r"C:\Users\tortn\Desktop"
 
 base_folder = os.path.join(base_drive, "TRADER_1_DATA")
 
