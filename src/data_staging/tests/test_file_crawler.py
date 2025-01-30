@@ -1,6 +1,6 @@
 import os
 from pprint import pprint
-from src.data_staging.file_crawler import get_file_structure
+from data_staging.get_csv_paths import get_file_structure
 from src.shared.config import data_folder
 
 def test_xrp_all_pairs_all_timeframes():

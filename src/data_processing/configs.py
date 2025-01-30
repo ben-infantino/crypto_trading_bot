@@ -4,8 +4,8 @@ coin_pairs = {
     # "SOL": "SOLUSD",
 }
 
-# timeframes = [5, 30, 60, 1440]
-timeframes = [30]
+timeframes = [15, 30, 60]
+target_timeframe = 30
 
 indicator_configs = {
     1:  [

@@ -6,4 +6,6 @@ __pycache__/
 *.pyc
 *.pyo
 
-
+src/data_processing/tests/data/
+src/data_processing/tests/results/
+src/backtesting/
