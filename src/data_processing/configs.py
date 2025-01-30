@@ -1,11 +1,11 @@
 coin_pairs = {
-    "XRP": "XRPUSD",
-    # "ETH": "ETHUSD",
+    # "X": "XRPUSD",
+    "ETH": "ETHUSD",
     # "SOL": "SOLUSD",
 }
 
-timeframes = [15, 30, 60]
-target_timeframe = 30
+timeframes = [5, 15, 30, 60, 240]
+target_timeframe = 60
 
 indicator_configs = {
     1:  [

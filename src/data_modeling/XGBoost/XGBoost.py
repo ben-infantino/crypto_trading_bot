@@ -1,27 +1,49 @@
 import xgboost as xgb
 import pandas as pd
 import matplotlib.pyplot as plt
-from src.data_modeling.XGBoost.configs import param_grid
+#from src.data_modeling.XGBoost.configs import param_grid
 from sklearn.metrics import mean_squared_error
+import time
+
+
+# def grid_search_XGBoost(train_data, val_data):
+
+#     params = {
+#         'n_estimators': param_grid['n_estimators'],
+#         'max_depth': param_grid['max_depth'],
+#         'learning_rate': param_grid['learning_rate'],
+#         'random_state': param_grid['random_state'],
+#         'eval_metric': param_grid['eval_metric'],
+#         'early_stopping_rounds': param_grid['early_stopping_rounds']
+#     }
+
 
 def train_XGBoost(train_data, val_data):
 
     params = {
-        'n_estimators': param_grid['n_estimators'],
-        'max_depth': param_grid['max_depth'],
-        'learning_rate': param_grid['learning_rate'],
-        'random_state': param_grid['random_state'],
-        'eval_metric': param_grid['eval_metric'],
-        'early_stopping_rounds': param_grid['early_stopping_rounds']
+        "tree_method": "hist",
+        "subsample": 0.8,  # Use full dataset per boosting iteration
+        "colsample_bytree": 0.8,  # Feature subsampling
+        "learning_rate": 0.05,
+        "max_depth": 10,
+        "eval_metric": "rmse",
+        "random_state": 42, 
+        "device": "cuda", 
+        "early_stopping_rounds": 20, 
+        "n_estimators": 1000, 
+        "max_bin": 1024
     }
 
-    model = xgb.XGBRegressor(**params)
-    model.fit(train_data["features"], train_data["targets"], eval_set=[(val_data["features"], val_data["targets"])], verbose=True)
 
-    print(f"\nModel RMSE at Best Iteration: {model.best_score}")
-    print(f"\nBest Iteration: {model.best_iteration}")
 
-    return model
+    # Fit XGBoost model without shuffling
+    xgb_model = xgb.XGBRegressor(**params)
+    xgb_model.fit(train_data["features"], train_data["targets"], eval_set=[(val_data["features"], val_data["targets"])], verbose=True)
+
+    print(f"\nModel RMSE at Best Iteration: {xgb_model.best_score}")
+    print(f"\nBest Iteration: {xgb_model.best_iteration}")
+
+    return xgb_model
 
 def predict_XGBoost(model, val_data, test_data):
     val_preds = model.predict(val_data["features"], iteration_range=(0, model.best_iteration))
