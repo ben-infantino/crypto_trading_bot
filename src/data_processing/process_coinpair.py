@@ -12,7 +12,7 @@ def process_coinpair(coin, pair):
 
     for timeframe in csv_paths[coin][pair]['timeframes']:
         data = ingest_csv(csv_paths[coin][pair]['timeframes'][timeframe])
-        processed_data = process_timeframe(data, timeframe, target_timeframe, relative_returns=True)
+        processed_data = process_timeframe(data, timeframe, target_timeframe)
         data_dict[timeframe] = processed_data
         
 
