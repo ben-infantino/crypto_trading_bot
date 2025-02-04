@@ -18,7 +18,8 @@ import time
 #     }
 
 
-def train_XGBoost(train_data, val_data):
+def train_XGBoost(train_data, val_data = None):
+
 
     params = {
         "tree_method": "hist",
@@ -38,7 +39,11 @@ def train_XGBoost(train_data, val_data):
 
     # Fit XGBoost model without shuffling
     xgb_model = xgb.XGBRegressor(**params)
-    xgb_model.fit(train_data["features"], train_data["targets"], eval_set=[(val_data["features"], val_data["targets"])], verbose=True)
+    if val_data is not None:
+        xgb_model.fit(train_data["features"], train_data["targets"], eval_set=[(val_data["features"], val_data["targets"])], verbose=True)
+    else:
+        xgb_model.fit(train_data["features"], train_data["targets"], verbose=True)
+
 
     print(f"\nModel RMSE at Best Iteration: {xgb_model.best_score}")
     print(f"\nBest Iteration: {xgb_model.best_iteration}")
