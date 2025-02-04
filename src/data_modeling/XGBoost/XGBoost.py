@@ -18,13 +18,11 @@ import time
 #     }
 
 
-def train_XGBoost(train_data, val_data = None):
-
-
+def train_XGBoost(train_data, val_data):
     params = {
         "tree_method": "hist",
-        "subsample": 0.8,  # Use full dataset per boosting iteration
-        "colsample_bytree": 0.8,  # Feature subsampling
+        "subsample": 0.8,  
+        "colsample_bytree": 0.8,  
         "learning_rate": 0.05,
         "max_depth": 10,
         "eval_metric": "rmse",
@@ -35,39 +33,28 @@ def train_XGBoost(train_data, val_data = None):
         "max_bin": 1024
     }
 
-
-
-    # Fit XGBoost model without shuffling
     xgb_model = xgb.XGBRegressor(**params)
-    if val_data is not None:
-        xgb_model.fit(train_data["features"], train_data["targets"], eval_set=[(val_data["features"], val_data["targets"])], verbose=True)
-    else:
-        xgb_model.fit(train_data["features"], train_data["targets"], verbose=True)
-
+    xgb_model.fit(
+        train_data["features"],
+        train_data["targets"],
+        eval_set=[(val_data["features"], val_data["targets"])],
+        verbose=True
+    )
 
     print(f"\nModel RMSE at Best Iteration: {xgb_model.best_score}")
     print(f"\nBest Iteration: {xgb_model.best_iteration}")
 
     return xgb_model
 
-def predict_XGBoost(model, val_data, test_data):
-    val_preds = model.predict(val_data["features"], iteration_range=(0, model.best_iteration))
+
+def predict_XGBoost(model, test_data):
     test_preds = model.predict(test_data["features"], iteration_range=(0, model.best_iteration))
-
-    val_mse = mean_squared_error(val_data["targets"], val_preds)
     test_mse = mean_squared_error(test_data["targets"], test_preds)
+    print(f"\nTest RMSE: {test_mse**0.5}")    
+    return test_preds
 
-    print(f"\nValidation RMSE: {val_mse**0.5}")
-    print(f"\nTest RMSE: {test_mse**0.5}")
 
-    return val_preds, test_preds
-
-def plot_XGBoost(val_data, test_data, val_preds, test_preds):
-
-    val_comparison = pd.DataFrame({
-        "actual_return": val_data["targets"],
-        "predicted_return": val_preds
-    })
+def plot_XGBoost(test_data, test_preds):
 
     test_comparison = pd.DataFrame({
         "actual_return": test_data["targets"],
@@ -75,12 +62,6 @@ def plot_XGBoost(val_data, test_data, val_preds, test_preds):
     })
 
     plt.figure(figsize=(15, 10))
-    plt.subplot(2, 1, 1)
-    plt.plot(val_comparison["actual_return"].values, label="Actual Return", alpha=0.7)
-    plt.plot(val_comparison["predicted_return"].values, label="Predicted Return", alpha=0.7)
-    plt.title("Validation Set: Actual vs. Predicted Returns")
-    plt.legend()
-    plt.grid(True)
 
     plt.subplot(2, 1, 2)
     plt.plot(test_comparison["actual_return"].values, label="Actual Return", alpha=0.7)

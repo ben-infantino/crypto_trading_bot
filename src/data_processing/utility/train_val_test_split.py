@@ -24,8 +24,8 @@ def train_validate_test_split(data, train_size=0.7, validate_size=0.15, test_siz
     return train_data, validate_data, test_data
 
 
-# New function: Create expanding-window time series folds.
-def time_series_folds(data, n_folds=5, initial_train_frac=0.3):
+# Updated function: Create expanding-window time series folds with validation splits.
+def time_series_folds(data, n_folds=5, initial_train_frac=0.3, val_frac=0.2):
     """
     Splits the data into expanding-window time series folds.
     
@@ -33,9 +33,10 @@ def time_series_folds(data, n_folds=5, initial_train_frac=0.3):
       - data: pandas DataFrame sorted chronologically by 'timestamp'.
       - n_folds: Number of folds to create.
       - initial_train_frac: Fraction of the data to use for the initial training set.
+      - val_frac: Fraction of each training fold to set aside for validation.
       
     Returns:
-      - List of tuples [(train_fold, test_fold), ...] where each fold is a dict with:
+      - List of tuples [(train_fold, val_fold, test_fold), ...] where each fold is a dict with:
           • 'features': DataFrame of features (all columns except 'timestamp' and 'target')
           • 'targets': Series for the target ('target' column)
     """
@@ -57,15 +58,29 @@ def time_series_folds(data, n_folds=5, initial_train_frac=0.3):
         train_fold = data.iloc[:train_end]
         test_fold = data.iloc[test_start:test_end]
 
-        # Only include the fold if both training and testing parts are non-empty.
-        if len(train_fold) > 0 and len(test_fold) > 0:
+        # Only include the fold if training, validation, and testing parts are non-empty.
+        if len(train_fold) > 1 and len(test_fold) > 0:
+            # Split train_fold into training and validation parts.
+            n_train = len(train_fold)
+            split_index = int(n_train * (1 - val_frac))
+            split_index = max(1, split_index)
+            if n_train - split_index < 1:
+                split_index = n_train - 1
+
+            train_train = train_fold.iloc[:split_index]
+            val_fold = train_fold.iloc[split_index:]
+
             train_dict = {
-                'features': train_fold.drop(columns=['timestamp', 'target']),
-                'targets': train_fold['target']
+                'features': train_train.drop(columns=['timestamp', 'target']),
+                'targets': train_train['target']
+            }
+            val_dict = {
+                'features': val_fold.drop(columns=['timestamp', 'target']),
+                'targets': val_fold['target']
             }
             test_dict = {
                 'features': test_fold.drop(columns=['timestamp', 'target']),
                 'targets': test_fold['target']
             }
-            folds.append((train_dict, test_dict))
+            folds.append((train_dict, val_dict, test_dict))
     return folds

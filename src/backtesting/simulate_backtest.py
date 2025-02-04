@@ -48,7 +48,7 @@ def backtest_model(model, data):
     # Loop through each row starting at index 1 since we need a previous row for the entry price
     for i in range(1, len(features)):
         #print every 200 rows
-        if i % 200 == 0:
+        if i % 500 == 0:
             print(f"Backtest progress: {i}/{len(features)}")
 
         # Predict the future price using the features at time T (current row)
