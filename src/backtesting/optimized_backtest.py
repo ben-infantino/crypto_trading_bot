@@ -87,9 +87,8 @@ def backtest_model(model, data):
     
     # --- Batch Prediction Setup ---
     # Create a DMatrix with all features (this will leverage the GPU if model is configured for GPU)
-    dmatrix_features = xgb.DMatrix(features)
     # Compute predictions for all rows at once
-    predicted_prices = model.predict(dmatrix_features)
+    predicted_prices = model.predict(features)
     
     # Convert both the predicted prices and targets to numpy arrays for faster access
     predicted_prices = np.asarray(predicted_prices)
@@ -145,8 +144,8 @@ def backtest_model(model, data):
     }
 
     # --- Output the Results ---
-    print("Backtest Summary:")
-    for key, value in summary.items():
-        print(f"{key}: {value}")
+    # print("Backtest Summary:")
+    # for key, value in summary.items():
+    #     print(f"{key}: {value}")
 
     return summary

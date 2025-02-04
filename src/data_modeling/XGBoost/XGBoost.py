@@ -29,7 +29,7 @@ def train_XGBoost(train_data, val_data):
         "random_state": 42, 
         "device": "cuda", 
         "early_stopping_rounds": 20, 
-        "n_estimators": 1000, 
+        "n_estimators": 6000, 
         "max_bin": 1024
     }
 
@@ -37,8 +37,8 @@ def train_XGBoost(train_data, val_data):
     xgb_model.fit(
         train_data["features"],
         train_data["targets"],
-        eval_set=[(val_data["features"], val_data["targets"])],
-        verbose=True
+        eval_set=[(val_data["features"], val_data["targets"])], 
+        verbose=False
     )
 
     print(f"\nModel RMSE at Best Iteration: {xgb_model.best_score}")
