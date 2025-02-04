@@ -43,6 +43,7 @@ def backtest_model(model, data):
     balance_history = []  # Balance after each row
     trade_logs = []       # List to hold details for each trade
 
+
     print("Starting backtest...")
     # Loop through each row starting at index 1 since we need a previous row for the entry price
     for i in range(1, len(features)):
