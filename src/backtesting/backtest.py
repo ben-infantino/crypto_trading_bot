@@ -74,7 +74,6 @@ def backtest_model(model, data):
     Returns:
       - summary: Dictionary of aggregate metrics.
     """
-    print("Backtesting model...")
     # --- Set Testing Variables ---
     INITIAL_BALANCE = 10000         # Starting balance
     PERCENT_TO_BUY = 0.10           # Invest 10% of current balance on each trade
@@ -143,9 +142,55 @@ def backtest_model(model, data):
         'profit_factor': profit_factor,
     }
 
-    # --- Output the Results ---
-    # print("Backtest Summary:")
-    # for key, value in summary.items():
-    #     print(f"{key}: {value}")
+    # --- Compute Weighted Aggregate Score (Refined) ---
+    # Define helper normalization function for clarity and consistency.
+    def safe_normalize(value, low, high):
+        return (np.clip(value, low, high) - low) / (high - low)
 
-    return summary
+    # Normalize profit ratio: total_profit relative to initial_balance.
+    profit_ratio = summary['total_profit'] / summary['initial_balance']
+    norm_profit = safe_normalize(profit_ratio, -0.5, 1.0)  # maps -50% -> 0, +100% -> 1
+
+    # Normalize Sharpe ratio: handle NaN values by treating them as the worst-case (-1).
+    sharpe = summary['sharpe_ratio']
+    if np.isnan(sharpe):
+        sharpe = -1.0
+    norm_sharpe = safe_normalize(sharpe, -1, 3)  # maps -1 -> 0, +3 -> 1
+
+    # Normalize max_drawdown: lower drawdown is better.
+    norm_drawdown = 1 - np.clip(summary['max_drawdown'], 0, 1)  # 0 drawdown -> 1, 1 -> 0
+
+    # Win rate is already a proportion between 0 and 1.
+    norm_win = np.clip(summary['win_rate'], 0, 1)
+
+    # Define weights reflecting importance (Profit 40%, Win Rate 30%, Sharpe 20%, Drawdown 10%)
+    w_profit   = 0.4
+    w_win      = 0.3
+    w_sharpe   = 0.2
+    w_drawdown = 0.1
+
+    aggregate_score = (w_profit * norm_profit +
+                       w_win * norm_win +
+                       w_sharpe * norm_sharpe +
+                       w_drawdown * norm_drawdown)
+    
+    print()
+    # print the pre-normalized metrics and the normalized metrics in a readable format
+    print("Pre-normalized metrics:")
+    print(f"Profit ratio: {profit_ratio:.4f}")
+    print(f"Sharpe ratio: {sharpe:.4f}")
+    print(f"Max drawdown: {summary['max_drawdown']:.4f}")
+    print(f"Win rate: {summary['win_rate']:.4f}")
+
+    print("Normalized metrics:")
+    print(f"Profit ratio: {norm_profit:.4f}")
+    print(f"Sharpe ratio: {norm_sharpe:.4f}")
+    print(f"Max drawdown: {norm_drawdown:.4f}")
+    print(f"Win rate: {norm_win:.4f}")
+
+    print()
+
+    # Add the aggregate score to the summary and return both.
+
+    summary['aggregate_score'] = aggregate_score
+    return summary, aggregate_score
