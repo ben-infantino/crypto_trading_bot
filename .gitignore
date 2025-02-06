@@ -8,3 +8,5 @@ __pycache__/
 
 src/data_processing/tests/data/
 src/data_processing/tests/results/
+
+hyperparameter_diagnostics.pdf
