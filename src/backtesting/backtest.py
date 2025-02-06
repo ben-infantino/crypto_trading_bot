@@ -107,6 +107,7 @@ def backtest_model(model, data):
     total_profit = final_balance - initial_balance
     avg_profit_per_trade = total_profit / num_trades if num_trades > 0 else 0.0
     win_rate = wins / num_trades if num_trades > 0 else 0.0
+
     loss_rate = losses / num_trades if num_trades > 0 else 0.0
 
     # Maximum Drawdown Calculation using the balance history array
@@ -121,16 +122,29 @@ def backtest_model(model, data):
     else:
         sharpe_ratio = np.nan
 
+    # --- New: Sortino Ratio Calculation with Penalty ---
+    # Calculate downside deviation as the std of negative trade returns (assuming a target of 0)
+    if num_trades > 0:
+        negative_returns = trade_returns[trade_returns < 0]
+        if negative_returns.size > 0 and np.std(negative_returns) > 0:
+            sortino_ratio = np.mean(trade_returns) / np.std(negative_returns)
+        else:
+            sortino_ratio = -10 # Penalize if not calculable
+    else:
+        sortino_ratio = -10  # Penalize if no trades
+
+
     # Profit Factor (Total profit on winning trades divided by the absolute loss on losing trades)
     if total_profit_loss < 0:
         profit_factor = total_profit_win / abs(total_profit_loss)
     else:
         profit_factor = np.nan
 
+    # --- Update Aggregate Metrics Summary ---
     summary = {
         'initial_balance': initial_balance,
         'final_balance': final_balance,
-        'total_profit': total_profit,
+        'total_profit': final_balance - initial_balance,  # Kept for reference if needed
         'num_trades': num_trades,
         'wins': wins,
         'losses': losses,
@@ -140,57 +154,8 @@ def backtest_model(model, data):
         'max_drawdown': max_drawdown,
         'sharpe_ratio': sharpe_ratio,
         'profit_factor': profit_factor,
+        'sortino_ratio': sortino_ratio  # Added sortino ratio to the summary
     }
 
-    # --- Compute Weighted Aggregate Score (Refined) ---
-    # Define helper normalization function for clarity and consistency.
-    def safe_normalize(value, low, high):
-        return (np.clip(value, low, high) - low) / (high - low)
-
-    # Normalize profit ratio: total_profit relative to initial_balance.
-    profit_ratio = summary['total_profit'] / summary['initial_balance']
-    norm_profit = safe_normalize(profit_ratio, -0.5, 1.0)  # maps -50% -> 0, +100% -> 1
-
-    # Normalize Sharpe ratio: handle NaN values by treating them as the worst-case (-1).
-    sharpe = summary['sharpe_ratio']
-    if np.isnan(sharpe):
-        sharpe = -1.0
-    norm_sharpe = safe_normalize(sharpe, -1, 3)  # maps -1 -> 0, +3 -> 1
-
-    # Normalize max_drawdown: lower drawdown is better.
-    norm_drawdown = 1 - np.clip(summary['max_drawdown'], 0, 1)  # 0 drawdown -> 1, 1 -> 0
-
-    # Win rate is already a proportion between 0 and 1.
-    norm_win = np.clip(summary['win_rate'], 0, 1)
-
-    # Define weights reflecting importance (Profit 40%, Win Rate 30%, Sharpe 20%, Drawdown 10%)
-    w_profit   = 0.4
-    w_win      = 0.3
-    w_sharpe   = 0.2
-    w_drawdown = 0.1
-
-    aggregate_score = (w_profit * norm_profit +
-                       w_win * norm_win +
-                       w_sharpe * norm_sharpe +
-                       w_drawdown * norm_drawdown)
-    
-    print()
-    # print the pre-normalized metrics and the normalized metrics in a readable format
-    print("Pre-normalized metrics:")
-    print(f"Profit ratio: {profit_ratio:.4f}")
-    print(f"Sharpe ratio: {sharpe:.4f}")
-    print(f"Max drawdown: {summary['max_drawdown']:.4f}")
-    print(f"Win rate: {summary['win_rate']:.4f}")
-
-    print("Normalized metrics:")
-    print(f"Profit ratio: {norm_profit:.4f}")
-    print(f"Sharpe ratio: {norm_sharpe:.4f}")
-    print(f"Max drawdown: {norm_drawdown:.4f}")
-    print(f"Win rate: {norm_win:.4f}")
-
-    print()
-
-    # Add the aggregate score to the summary and return both.
-
-    summary['aggregate_score'] = aggregate_score
-    return summary, aggregate_score
+    # --- Return the updated summary and sortino ratio instead of total profit ---
+    return summary, sortino_ratio
